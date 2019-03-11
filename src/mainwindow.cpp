@@ -55,7 +55,7 @@ void MainWindow::populateUi() {
     for (int i = 0; i < metaAlgorithm.keyCount(); i++) {
         ui->comboBoxAlgorithm->addItem(prettifyCamelCase(metaAlgorithm.key(i)));
     }
-    ui->comboBoxAlgorithm->setCurrentIndex(Algorithm::SimulatedAnnealing);
+    ui->comboBoxAlgorithm->setCurrentIndex(Algorithm::LocalBeamSearch);
     ui->comboBoxAlgorithm->blockSignals(false);
 }
 
@@ -124,14 +124,16 @@ void MainWindow::generateQueens() {
 }
 
 void MainWindow::toggleAlgorithmOptions() {
+    Algorithm algorithm = getAlgorithm();
+
+    // (Un)Hide options groups
     for (int i = 0; i < ui->optionsAlgorithms->count(); i++) {
         QLayoutItem *item = ui->optionsAlgorithms->itemAt(i);
-        item->widget()->setHidden(true);
+        item->widget()->setHidden(i != algorithm);
     }
 
-    // Unhide after all are hidden to prevent UI resizing glitches due to minimal sizes
-    int index = ui->comboBoxAlgorithm->currentIndex();
-    ui->optionsAlgorithms->itemAt(index)->widget()->setHidden(false);
+    // Enable Step mode only for supported algorithms
+    ui->checkBoxRunStep->setEnabled(algorithm == Algorithm::HillClimbing || algorithm == Algorithm::SimulatedAnnealing);
 }
 
 int MainWindow::getBoardSize() {
@@ -205,11 +207,13 @@ void MainWindow::on_pushButtonRun_clicked() {
             break;
         }
         case Algorithm::LocalBeamSearch: {
-            int states = ui->lineEditStates->text().toInt();
-            qDebug() << "states:" << states;
+            int nStates = ui->lineEditStates->text().toInt();
+            int maxIters = ui->lineEditMaxIters->text().toInt();
+            qDebug() << "states:" << nStates << "max iters:" << maxIters;
 
-            //LocalSearch::localBeam(getBoardSize(), queens, states);
+            LocalSearch::State state = LocalSearch::localBeam(getBoardSize(), queens, nStates, maxIters);
 
+            queens = state.queens;
             setupBoard();
             break;
         }

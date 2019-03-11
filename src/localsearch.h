@@ -13,10 +13,6 @@ namespace LocalSearch {
         bool operator<(const State &s) const {
             return heuristics < s.heuristics;
         }
-
-        static bool isHeuristics(const State &s, int h) {
-            return s.heuristics == h;
-        }
     };
 
     // Calculate heuristics of queen positions (number of pairs of queens attacking each other)
@@ -34,6 +30,9 @@ namespace LocalSearch {
     State simulatedAnnealing(int boardSize, QList<QPoint> &queens, int &tempStart, int tempChange);
     State simulatedAnnealingStep(int boardSize, QList<QPoint> &queens, int &temp, int tempChange);
 
-    /*void localBeam(int boardSize, QList<QPoint> *queens, int states);
-    void genetic(int boardSize, QList<QPoint> *queens, int populationSize, int elitePerc, int crossProb, int mutationProb, int generations);*/
+    State localBeam(int boardSize, QList<QPoint> &queens, int nStates, int maxIters);
+    QList<State> localBeamInit(int boardSize, QList<QPoint> &queens, int nStates);
+    QList<State> localBeamStep(int boardSize, QList<State> &states, int nStates);
+
+    /*State genetic(int boardSize, QList<QPoint> &queens, int populationSize, int elitePerc, int crossProb, int mutationProb, int generations);*/
 };

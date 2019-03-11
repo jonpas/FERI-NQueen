@@ -92,7 +92,7 @@ LocalSearch::State LocalSearch::hillClimb(int boardSize, QList<QPoint> &queens, 
 LocalSearch::State LocalSearch::hillClimbStep(int boardSize, QList<QPoint> &queens) {
     QList<State> moveStates;
 
-    // Perform all possible moves on all queens and calculate each move's heuristics
+    // Perform all possible moves on all queens and calculate their heuristics
     for (int i = 0; i < queens.size(); i++) {
         for (auto &newQueens : getAllowedStates(boardSize, queens, i)) {
             moveStates.push_back({newQueens, calcHeuristics(newQueens)});
@@ -118,7 +118,6 @@ LocalSearch::State LocalSearch::hillClimbStep(int boardSize, QList<QPoint> &quee
 
 LocalSearch::State LocalSearch::simulatedAnnealing(int boardSize, QList<QPoint> &queens, int &tempStart, int tempChange) {
     State state = {queens, std::numeric_limits<int>::max()};
-
     int steps = 0;
 
     // Try to find global optimum (heuristics = 0)
@@ -168,10 +167,61 @@ LocalSearch::State LocalSearch::simulatedAnnealingStep(int boardSize, QList<QPoi
     return state;
 }
 
-/*void LocalSearch::localBeam(int boardSize, QList<QPoint> &queens, int states) {
+LocalSearch::State LocalSearch::localBeam(int boardSize, QList<QPoint> &queens, int nStates, int maxIters) {
+    QList<State> states = localBeamInit(boardSize, queens, nStates);
+    int steps = 0;
 
+    // Try to find global optimum (heuristics = 0)
+    while (states.size() > 1 && states[0].heuristics != 0 && maxIters > steps) {
+        steps++;
+        states = localBeamStep(boardSize, states, nStates);
+    }
+
+    qDebug() << "steps:" << steps; // TODO Status bar
+    return states[0];
 }
 
-void LocalSearch::genetic(int boardSize, QList<QPoint> &queens, int populationSize, int elitePerc, int crossProb, int mutationProb, int generations) {
+QList<LocalSearch::State> LocalSearch::localBeamInit(int boardSize, QList<QPoint> &queens, int nStates) {
+    // Perform all possible moves on all queens and calculate their heuristics
+    QList<State> moveStates;
+    for (int i = 0; i < queens.size(); i++) {
+        for (auto &newQueens : getAllowedStates(boardSize, queens, i)) {
+            moveStates.push_back({newQueens, calcHeuristics(newQueens)});
+        }
+    }
+
+    // Select random states
+    QList<State> states;
+    std::sample(moveStates.begin(), moveStates.end(), std::back_inserter(states), nStates, randGen);
+
+    return states;
+}
+
+QList<LocalSearch::State> LocalSearch::localBeamStep(int boardSize, QList<State> &states, int nStates) {
+    // Sort by heuristics
+    std::sort(states.begin(), states.end());
+
+    // Exit if found result
+    if (states[0].heuristics == 0) {
+        return {states[0]};
+    }
+
+    // Select nStates best states
+    states = QList<State>(states.mid(0, nStates));
+
+    // Perform all possible moves on all queens and calculate their heuristics
+    QList<State> newStates;
+    for (auto &state : states) {
+        for (int i = 0; i < state.queens.size(); i++) {
+            for (auto &newQueens : getAllowedStates(boardSize, state.queens, i)) {
+                newStates.push_back({newQueens, calcHeuristics(newQueens)});
+            }
+        }
+    }
+
+    return newStates;
+}
+
+/*LocalSearch::State LocalSearch::genetic(int boardSize, QList<QPoint> &queens, int populationSize, int elitePerc, int crossProb, int mutationProb, int generations) {
 
 }*/
