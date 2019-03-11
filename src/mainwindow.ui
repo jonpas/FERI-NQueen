@@ -12,8 +12,8 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>600</width>
-    <height>500</height>
+    <width>800</width>
+    <height>600</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -25,8 +25,8 @@
      <widget class="QTableWidget" name="tableWidgetBoard">
       <property name="minimumSize">
        <size>
-        <width>350</width>
-        <height>350</height>
+        <width>400</width>
+        <height>400</height>
        </size>
       </property>
       <property name="focusPolicy">
@@ -59,7 +59,25 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
+           <widget class="QLabel" name="labelSize">
+            <property name="text">
+             <string>Queens:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QComboBox" name="comboBoxSize"/>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QLabel" name="labelPlacement">
+            <property name="text">
+             <string>Placement:</string>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QComboBox" name="comboBoxPlacement"/>
@@ -69,7 +87,7 @@
         <item>
          <widget class="QPushButton" name="pushButtonReset">
           <property name="text">
-           <string>Reset Queens</string>
+           <string>Reset</string>
           </property>
          </widget>
         </item>
@@ -81,12 +99,12 @@
       <item>
        <layout class="QHBoxLayout" name="optionsAlgorithms">
         <item>
-         <widget class="QGroupBox" name="optionsHillClimb">
+         <widget class="QGroupBox" name="optionsHillClimbBase">
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
-            <layout class="QVBoxLayout" name="verticalLayout_4">
+            <layout class="QVBoxLayout" name="optionsHillClimb">
              <item>
-              <widget class="QLabel" name="labelMoves">
+              <widget class="QLabel" name="labelEquivalentMoves">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -94,7 +112,7 @@
                 </sizepolicy>
                </property>
                <property name="text">
-                <string>Moves to equal neighbour states:</string>
+                <string>Equivalent Moves:</string>
                </property>
                <property name="wordWrap">
                 <bool>true</bool>
@@ -102,7 +120,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="lineEditMoves">
+              <widget class="QLineEdit" name="lineEditEquivalentMoves">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -110,7 +128,7 @@
                 </sizepolicy>
                </property>
                <property name="text">
-                <string/>
+                <string>100000</string>
                </property>
               </widget>
              </item>
@@ -120,10 +138,10 @@
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="optionsSimAnneal_2">
+         <widget class="QGroupBox" name="optionsSimAnnealBase">
           <layout class="QVBoxLayout" name="optionsSimAnneal">
            <item>
-            <layout class="QVBoxLayout" name="verticalLayout_5">
+            <layout class="QVBoxLayout" name="optionsSimAnneal_2">
              <item>
               <widget class="QLabel" name="labelTempStart">
                <property name="sizePolicy">
@@ -182,10 +200,10 @@
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="optionsLocalBeam_2">
+         <widget class="QGroupBox" name="optionsLocalBeamBase">
           <layout class="QVBoxLayout" name="optionsLocalBeam">
            <item>
-            <layout class="QVBoxLayout" name="verticalLayout_6">
+            <layout class="QVBoxLayout" name="optionsLocalBeam_2">
              <item>
               <widget class="QLabel" name="labelStates">
                <property name="sizePolicy">
@@ -195,7 +213,7 @@
                 </sizepolicy>
                </property>
                <property name="text">
-                <string>Amount of States:</string>
+                <string>States:</string>
                </property>
                <property name="wordWrap">
                 <bool>true</bool>
@@ -218,10 +236,10 @@
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="optionsGeneticAlg_2">
+         <widget class="QGroupBox" name="optionsGeneticAlgBase">
           <layout class="QVBoxLayout" name="optionsGeneticAlg">
            <item>
-            <layout class="QVBoxLayout" name="verticalLayout_7">
+            <layout class="QVBoxLayout" name="optionsGeneticAlg_2">
              <item>
               <widget class="QLabel" name="labelPopulationSize">
                <property name="sizePolicy">
@@ -355,6 +373,24 @@
             </layout>
            </item>
           </layout>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayoutRun">
+        <item>
+         <widget class="QPushButton" name="pushButtonRun">
+          <property name="text">
+           <string>Run Algorithm</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBoxRunStep">
+          <property name="text">
+           <string>Steps</string>
+          </property>
          </widget>
         </item>
        </layout>

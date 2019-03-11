@@ -22,12 +22,13 @@ public:
 private:
     Ui::MainWindow *ui;
     QTableWidget *board;
+    QList<QPoint> queens;
 
     static const QPair<uint8_t, uint8_t> SIZE_RANGE;
 
     void populateUi();
     void setupBoard();
-    QList<QPoint> getQueenPositions();
+    void generateQueens();
     void toggleAlgorithmOptions(int index);
 
     int getBoardSize();
@@ -41,4 +42,5 @@ private slots:
     void on_comboBoxPlacement_currentIndexChanged(const QString &arg1);
     void on_pushButtonReset_clicked();
     void on_comboBoxAlgorithm_currentIndexChanged(int index);
+    void on_pushButtonRun_clicked();
 };
