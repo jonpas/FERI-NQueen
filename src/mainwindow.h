@@ -29,11 +29,12 @@ private:
     void populateUi();
     void setupBoard();
     void generateQueens();
-    void toggleAlgorithmOptions(int index);
+    void toggleAlgorithmOptions();
 
     int getBoardSize();
     Placement getPlacementType();
     Algorithm getAlgorithm();
+    bool isStepsChecked();
 
     QString prettifyCamelCase(const QString &s);
 

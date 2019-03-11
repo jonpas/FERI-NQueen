@@ -31,7 +31,9 @@ namespace LocalSearch {
     State hillClimb(int boardSize, QList<QPoint> &queens, int equivalentMoves);
     State hillClimbStep(int boardSize, QList<QPoint> &queens);
 
-    /*void simulatedAnnealing(int boardSize, QList<QPoint> *queens, int tempStart, int tempChange);
-    void localBeam(int boardSize, QList<QPoint> *queens, int states);
+    State simulatedAnnealing(int boardSize, QList<QPoint> &queens, int &tempStart, int tempChange);
+    State simulatedAnnealingStep(int boardSize, QList<QPoint> &queens, int &temp, int tempChange);
+
+    /*void localBeam(int boardSize, QList<QPoint> *queens, int states);
     void genetic(int boardSize, QList<QPoint> *queens, int populationSize, int elitePerc, int crossProb, int mutationProb, int generations);*/
 };

@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     board = ui->tableWidgetBoard;
     populateUi();
 
-    toggleAlgorithmOptions(0);
+    toggleAlgorithmOptions();
     generateQueens();
     setupBoard();
 }
@@ -55,6 +55,7 @@ void MainWindow::populateUi() {
     for (int i = 0; i < metaAlgorithm.keyCount(); i++) {
         ui->comboBoxAlgorithm->addItem(prettifyCamelCase(metaAlgorithm.key(i)));
     }
+    ui->comboBoxAlgorithm->setCurrentIndex(Algorithm::SimulatedAnnealing);
     ui->comboBoxAlgorithm->blockSignals(false);
 }
 
@@ -122,13 +123,14 @@ void MainWindow::generateQueens() {
     }
 }
 
-void MainWindow::toggleAlgorithmOptions(int index) {
+void MainWindow::toggleAlgorithmOptions() {
     for (int i = 0; i < ui->optionsAlgorithms->count(); i++) {
         QLayoutItem *item = ui->optionsAlgorithms->itemAt(i);
         item->widget()->setHidden(true);
     }
 
     // Unhide after all are hidden to prevent UI resizing glitches due to minimal sizes
+    int index = ui->comboBoxAlgorithm->currentIndex();
     ui->optionsAlgorithms->itemAt(index)->widget()->setHidden(false);
 }
 
@@ -142,6 +144,10 @@ MainWindow::Placement MainWindow::getPlacementType() {
 
 MainWindow::Algorithm MainWindow::getAlgorithm() {
     return static_cast<Algorithm>(ui->comboBoxAlgorithm->currentIndex());
+}
+
+bool MainWindow::isStepsChecked() {
+    return ui->checkBoxRunStep->isChecked();
 }
 
 void MainWindow::on_comboBoxSize_currentIndexChanged(const QString &/*arg1*/) {
@@ -159,8 +165,8 @@ void MainWindow::on_pushButtonReset_clicked() {
     setupBoard();
 }
 
-void MainWindow::on_comboBoxAlgorithm_currentIndexChanged(int index) {
-    toggleAlgorithmOptions(index);
+void MainWindow::on_comboBoxAlgorithm_currentIndexChanged(int /*index*/) {
+    toggleAlgorithmOptions();
 }
 
 void MainWindow::on_pushButtonRun_clicked() {
@@ -170,7 +176,7 @@ void MainWindow::on_pushButtonRun_clicked() {
             qDebug() << "moves:" << equivalentMoves;
 
             LocalSearch::State state;
-            if (ui->checkBoxRunStep->isChecked()) {
+            if (isStepsChecked()) {
                 state = LocalSearch::hillClimbStep(getBoardSize(), queens);
             } else {
                 state = LocalSearch::hillClimb(getBoardSize(), queens, equivalentMoves);
@@ -181,20 +187,34 @@ void MainWindow::on_pushButtonRun_clicked() {
             break;
         }
         case Algorithm::SimulatedAnnealing: {
-            /*int tempStart = ui->lineEditTempStart->text().toInt();
+            int tempStart = ui->lineEditTempStart->text().toInt();
             int tempChange = ui->lineEditTempChange->text().toInt();
             qDebug() << "T start:" << tempStart << "T change:" << tempChange;
-            LocalSearch::simulatedAnnealing(getBoardSize(), &queens, tempStart, tempChange);*/
+
+            LocalSearch::State state;
+            if (isStepsChecked()) {
+                state = LocalSearch::simulatedAnnealingStep(getBoardSize(), queens, tempStart, tempChange);
+                // Set last temperature for next step (same as standard loop)
+                ui->lineEditTempStart->setText(QString::number(tempStart));
+            } else {
+                state = LocalSearch::simulatedAnnealing(getBoardSize(), queens, tempStart, tempChange);
+            }
+
+            queens = state.queens;
+            setupBoard();
             break;
         }
         case Algorithm::LocalBeamSearch: {
-            /*int states = ui->lineEditStates->text().toInt();
+            int states = ui->lineEditStates->text().toInt();
             qDebug() << "states:" << states;
-            LocalSearch::localBeam(getBoardSize(), &queens, states);*/
+
+            //LocalSearch::localBeam(getBoardSize(), queens, states);
+
+            setupBoard();
             break;
         }
         case Algorithm::GeneticAlgorithm: {
-            /*int populationSize = ui->lineEditPopulationSize->text().toInt();
+            int populationSize = ui->lineEditPopulationSize->text().toInt();
             int elitePerc = ui->lineEditElitePerc->text().toInt();
             int crossProb = ui->lineEditCrossProb->text().toInt();
             int mutationProb = ui->lineEditMutationProb->text().toInt();
@@ -202,7 +222,10 @@ void MainWindow::on_pushButtonRun_clicked() {
             qDebug() << "pop:" << populationSize << "elite%:" << elitePerc
                      << "cross p:" <<  crossProb << "mutation p:" << mutationProb
                      << "gens:" << generations;
-            LocalSearch::genetic(getBoardSize(), &queens, populationSize, elitePerc, crossProb, mutationProb, generations);*/
+
+            //LocalSearch::genetic(getBoardSize(), queens, populationSize, elitePerc, crossProb, mutationProb, generations);*
+
+            setupBoard();
             break;
         }
     }

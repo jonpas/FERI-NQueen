@@ -110,20 +110,68 @@ LocalSearch::State LocalSearch::hillClimbStep(int boardSize, QList<QPoint> &quee
 
     // Select random minimal heuristics state
     QList<State> states;
-    std::sample(minStates.begin(), minStates.end(), std::back_inserter(states), 1, randGen);
+    std::sample(minStates.begin(), minStates.end(), std::back_inserter(states), 1, randGen); // TODO Insert into variable directly
 
     qDebug() << "min:" << states[0].heuristics;
     return states[0];
 }
 
-/*void LocalSearch::simulatedAnnealing(int boardSize, QList<QPoint> *queens, int tempStart, int tempChange) {
+LocalSearch::State LocalSearch::simulatedAnnealing(int boardSize, QList<QPoint> &queens, int &tempStart, int tempChange) {
+    State state = {queens, std::numeric_limits<int>::max()};
+
+    int steps = 0;
+
+    // Try to find global optimum (heuristics = 0)
+    while (state.heuristics != 0 && tempStart > 0) {
+        steps++;
+        state = simulatedAnnealingStep(boardSize, state.queens, tempStart, tempChange);
+    }
+
+    qDebug() << "steps:" << steps; // TODO Status bar
+    return state;
+}
+
+LocalSearch::State LocalSearch::simulatedAnnealingStep(int boardSize, QList<QPoint> &queens, int &temp, int tempChange) {
+    State state = {queens, calcHeuristics(queens)};
+
+    // Exit if temperature at minimum
+    if  (temp <= 0) {
+        return state;
+    }
+
+    // Perform all possible moves on all queens
+    QList<QList<QPoint>> moveStates;
+    for (int i = 0; i < queens.size(); i++) {
+        moveStates.append(getAllowedStates(boardSize, queens, i));
+    }
+
+    // Select a random move
+    QList<QList<QPoint>> randStates;
+    std::sample(moveStates.begin(), moveStates.end(), std::back_inserter(randStates), 1, randGen); // TODO Insert into variable directly
+    QList<QPoint> randState = randStates[0];
+
+    // Select random state if lower heuristics or by probability
+    int randStateHeuristics = calcHeuristics(randState);
+    int deltaHeuristics = randStateHeuristics - state.heuristics;
+    if (deltaHeuristics < 0) {
+        state = {randState, randStateHeuristics};
+    } else {
+        double probability = exp(-deltaHeuristics / static_cast<double>(temp));
+        std::uniform_real_distribution<double> dist(0.0, 1.0);
+        if (probability > dist(randGen)) {
+            state = {randState, randStateHeuristics};
+        }
+    }
+
+    temp -= tempChange;
+
+    return state;
+}
+
+/*void LocalSearch::localBeam(int boardSize, QList<QPoint> &queens, int states) {
 
 }
 
-void LocalSearch::localBeam(int boardSize, QList<QPoint> *queens, int states) {
-
-}
-
-void LocalSearch::genetic(int boardSize, QList<QPoint> *queens, int populationSize, int elitePerc, int crossProb, int mutationProb, int generations) {
+void LocalSearch::genetic(int boardSize, QList<QPoint> &queens, int populationSize, int elitePerc, int crossProb, int mutationProb, int generations) {
 
 }*/
