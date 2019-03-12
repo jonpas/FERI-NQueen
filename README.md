@@ -23,7 +23,7 @@ Crown image made by [Freepik](https://www.freepik.com/) from [www.flaticon.com](
 - Genetic Algorithm
   - Population
   - Elitism Percentage
-  - Crossing Probability
+  - Crossover Probability
   - Mutation Probability
   - Maximum Generations
 

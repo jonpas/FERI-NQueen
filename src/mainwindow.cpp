@@ -79,7 +79,7 @@ void MainWindow::populateUi() {
 
     ui->lineEditPopulationSize->setValidator(validatorNatural);
     ui->lineEditElitePerc->setValidator(validatorUInt);
-    ui->lineEditCrossProb->setValidator(validatorRealNorm);
+    ui->lineEditCrossoverProb->setValidator(validatorRealNorm);
     ui->lineEditMutationProb->setValidator(validatorRealNorm);
     ui->lineEditGenerations->setValidator(validatorNatural);
 }
@@ -249,7 +249,7 @@ void MainWindow::on_pushButtonRun_clicked() {
         case Algorithm::GeneticAlgorithm: {
             int populationSize = ui->lineEditPopulationSize->text().toInt();
             int elitePerc = ui->lineEditElitePerc->text().toInt();
-            double crossProb = ui->lineEditCrossProb->text().toDouble();
+            double crossProb = ui->lineEditCrossoverProb->text().toDouble();
             double mutationProb = ui->lineEditMutationProb->text().toDouble();
             int generations = ui->lineEditGenerations->text().toInt();
 
