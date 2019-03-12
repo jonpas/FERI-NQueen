@@ -63,6 +63,25 @@ void MainWindow::populateUi() {
     }
     ui->comboBoxAlgorithm->setCurrentIndex(Algorithm::HillClimbing);
     ui->comboBoxAlgorithm->blockSignals(false);
+
+    // Line Edit validations
+    const QIntValidator *validatorUInt = new QIntValidator(0, std::numeric_limits<int>::max(), this);
+    const QIntValidator *validatorNatural = new QIntValidator(1, std::numeric_limits<int>::max(), this);
+    const QDoubleValidator *validatorRealNorm = new QDoubleValidator(0.0, 1.0, 5, this);
+
+    ui->lineEditEquivalentMoves->setValidator(validatorUInt);
+
+    ui->lineEditTempStart->setValidator(validatorNatural);
+    ui->lineEditTempChange->setValidator(validatorNatural);
+
+    ui->lineEditStates->setValidator(validatorUInt);
+    ui->lineEditMaxIters->setValidator(validatorNatural);
+
+    ui->lineEditPopulationSize->setValidator(validatorNatural);
+    ui->lineEditElitePerc->setValidator(validatorUInt);
+    ui->lineEditCrossProb->setValidator(validatorRealNorm);
+    ui->lineEditMutationProb->setValidator(validatorRealNorm);
+    ui->lineEditGenerations->setValidator(validatorNatural);
 }
 
 void MainWindow::setupBoard() {
