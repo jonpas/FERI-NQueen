@@ -9,6 +9,7 @@ namespace LocalSearch {
     struct State {
         QList<QPoint> queens;
         int heuristics;
+        int steps = 0;
 
         bool operator<(const State &s) const {
             return heuristics < s.heuristics;
@@ -21,7 +22,6 @@ namespace LocalSearch {
     bool threatens(QPoint queen1, QPoint queen2);
 
     QList<QList<QPoint>> getAllowedStates(int boardSize, QList<QPoint> queens, int index);
-    bool onBoard(int boardSize, QPoint queen);
 
     // Algorithms
     State hillClimb(int boardSize, QList<QPoint> &queens, int equivalentMoves);
@@ -34,5 +34,5 @@ namespace LocalSearch {
     QList<State> localBeamInit(int boardSize, QList<QPoint> &queens, int nStates);
     QList<State> localBeamStep(int boardSize, QList<State> &states, int nStates);
 
-    /*State genetic(int boardSize, QList<QPoint> &queens, int populationSize, int elitePerc, int crossProb, int mutationProb, int generations);*/
+    State genetic(int boardSize, QList<QPoint> &queens, int populationSize, int elitePerc, int crossProb, int mutationProb, int generations);
 };

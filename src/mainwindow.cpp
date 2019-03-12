@@ -1,17 +1,17 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "localsearch.h"
 
 #include <QRandomGenerator>
 #include <QMetaEnum>
 #include <QDebug>
-
-#include "localsearch.h"
 
 const QPair<uint8_t, uint8_t> MainWindow::SIZE_RANGE = {4, 12};
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
     board = ui->tableWidgetBoard;
+    board->installEventFilter(this);
     populateUi();
 
     toggleAlgorithmOptions();
@@ -43,7 +43,7 @@ void MainWindow::populateUi() {
     ui->comboBoxPlacement->clear();
     QMetaEnum metaPlacement = QMetaEnum::fromType<Placement>();
     for (int i = 0; i < metaPlacement.keyCount(); i++) {
-        ui->comboBoxPlacement->addItem(prettifyCamelCase(metaPlacement.key(i)));
+        ui->comboBoxPlacement->addItem(spaceCamelCase(metaPlacement.key(i)));
     }
     ui->comboBoxPlacement->setCurrentIndex(Placement::TopRow);
     ui->comboBoxPlacement->blockSignals(false);
@@ -53,9 +53,9 @@ void MainWindow::populateUi() {
     ui->comboBoxAlgorithm->clear();
     QMetaEnum metaAlgorithm = QMetaEnum::fromType<Algorithm>();
     for (int i = 0; i < metaAlgorithm.keyCount(); i++) {
-        ui->comboBoxAlgorithm->addItem(prettifyCamelCase(metaAlgorithm.key(i)));
+        ui->comboBoxAlgorithm->addItem(spaceCamelCase(metaAlgorithm.key(i)));
     }
-    ui->comboBoxAlgorithm->setCurrentIndex(Algorithm::LocalBeamSearch);
+    ui->comboBoxAlgorithm->setCurrentIndex(Algorithm::GeneticAlgorithm);
     ui->comboBoxAlgorithm->blockSignals(false);
 }
 
@@ -77,10 +77,6 @@ void MainWindow::setupBoard() {
             if (item == nullptr) {
                 item = new QTableWidgetItem();
                 board->setItem(x, y, item);
-
-                // Align cell text to center
-                // TODO Queen image instead of text
-                item->setTextAlignment(Qt::AlignCenter);
             }
 
             // Alternate cell color
@@ -89,17 +85,21 @@ void MainWindow::setupBoard() {
             }
 
             // Clear image
-            // TODO Queen image instead of text
-            item->setText("");
+            item->setIcon(QIcon());
         }
     }
 
     for (auto &queen : queens) {
-        // TODO Queen image instead of text
-        board->item(queen.y(), queen.x())->setText("QUEEN");
+        QTableWidgetItem *item = board->item(queen.y(), queen.x());
+        item->setIcon(QIcon(":/rsc/crown.png"));
     }
+}
 
-    qDebug() << "Heuristics:" << LocalSearch::calcHeuristics(queens);
+bool MainWindow::eventFilter(QObject* object, QEvent* event) {
+    if (event->type() == QEvent::Resize) {
+        board->setIconSize(board->size() / getBoardSize());
+    }
+    return false;
 }
 
 void MainWindow::generateQueens() {
@@ -148,6 +148,10 @@ MainWindow::Algorithm MainWindow::getAlgorithm() {
     return static_cast<Algorithm>(ui->comboBoxAlgorithm->currentIndex());
 }
 
+QString MainWindow::getAlgorithmName() {
+    return ui->comboBoxAlgorithm->currentText();
+}
+
 bool MainWindow::isStepsChecked() {
     return ui->checkBoxRunStep->isChecked();
 }
@@ -172,12 +176,13 @@ void MainWindow::on_comboBoxAlgorithm_currentIndexChanged(int /*index*/) {
 }
 
 void MainWindow::on_pushButtonRun_clicked() {
+    QString algorithmName = getAlgorithmName();
+    LocalSearch::State state;
+
     switch (getAlgorithm()) {
         case Algorithm::HillClimbing: {
             int equivalentMoves = ui->lineEditEquivalentMoves->text().toInt();
-            qDebug() << "moves:" << equivalentMoves;
 
-            LocalSearch::State state;
             if (isStepsChecked()) {
                 state = LocalSearch::hillClimbStep(getBoardSize(), queens);
             } else {
@@ -191,9 +196,7 @@ void MainWindow::on_pushButtonRun_clicked() {
         case Algorithm::SimulatedAnnealing: {
             int tempStart = ui->lineEditTempStart->text().toInt();
             int tempChange = ui->lineEditTempChange->text().toInt();
-            qDebug() << "T start:" << tempStart << "T change:" << tempChange;
 
-            LocalSearch::State state;
             if (isStepsChecked()) {
                 state = LocalSearch::simulatedAnnealingStep(getBoardSize(), queens, tempStart, tempChange);
                 // Set last temperature for next step (same as standard loop)
@@ -209,9 +212,8 @@ void MainWindow::on_pushButtonRun_clicked() {
         case Algorithm::LocalBeamSearch: {
             int nStates = ui->lineEditStates->text().toInt();
             int maxIters = ui->lineEditMaxIters->text().toInt();
-            qDebug() << "states:" << nStates << "max iters:" << maxIters;
 
-            LocalSearch::State state = LocalSearch::localBeam(getBoardSize(), queens, nStates, maxIters);
+            state = LocalSearch::localBeam(getBoardSize(), queens, nStates, maxIters);
 
             queens = state.queens;
             setupBoard();
@@ -223,19 +225,24 @@ void MainWindow::on_pushButtonRun_clicked() {
             int crossProb = ui->lineEditCrossProb->text().toInt();
             int mutationProb = ui->lineEditMutationProb->text().toInt();
             int generations = ui->lineEditGenerations->text().toInt();
-            qDebug() << "pop:" << populationSize << "elite%:" << elitePerc
-                     << "cross p:" <<  crossProb << "mutation p:" << mutationProb
-                     << "gens:" << generations;
 
-            //LocalSearch::genetic(getBoardSize(), queens, populationSize, elitePerc, crossProb, mutationProb, generations);*
+            state = LocalSearch::genetic(getBoardSize(), queens, populationSize, elitePerc, crossProb, mutationProb, generations);
 
+            queens = state.queens;
             setupBoard();
             break;
         }
     }
+
+    ui->statusBar->showMessage(
+        QString("Finished %1: %2! [%3 steps]")
+                .arg(algorithmName,
+                     state.heuristics == 0 ? "Success": "Failure",
+                     isStepsChecked() ? "1" : QString::number(state.steps)),
+        10000);
 }
 
-QString MainWindow::prettifyCamelCase(const QString &s) {
+QString MainWindow::spaceCamelCase(const QString &s) {
     static QRegularExpression regExp1 {"(.)([A-Z][a-z]+)"};
     static QRegularExpression regExp2 {"([a-z0-9])([A-Z])"};
 

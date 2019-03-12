@@ -27,30 +27,51 @@ QList<QList<QPoint>> LocalSearch::getAllowedStates(int boardSize, QList<QPoint> 
 
     QList<QList<QPoint>> newQueensStates;
 
-    QList<QPoint> possibleMoves = {
-        {movingQueen.x() - 1, movingQueen.y()},     // Left
-        {movingQueen.x() + 1, movingQueen.y()},     // Right
-        {movingQueen.x(),     movingQueen.y() - 1}, // Up
-        {movingQueen.x(),     movingQueen.y() + 1}, // Down
-        {movingQueen.x() - 1, movingQueen.y() - 1}, // Left-Up
-        {movingQueen.x() - 1, movingQueen.y() + 1}, // Left-Down
-        {movingQueen.x() + 1, movingQueen.y() - 1}, // Right-Up
-        {movingQueen.x() + 1, movingQueen.y() + 1}  // Right-Down
-    };
+    // Create all possible moves
+    QList<QPoint> possibleMoves;
 
+    // Left
+    for (int x = movingQueen.x(); x >= 0; x--) {
+        possibleMoves.push_back({x, movingQueen.y()});
+    }
+    // Right
+    for (int x = movingQueen.x(); x < boardSize; x++) {
+        possibleMoves.push_back({x, movingQueen.y()});
+    }
+    // Up
+    for (int y = movingQueen.y(); y >= 0; y--) {
+        possibleMoves.push_back({movingQueen.x(), y});
+    }
+    // Down
+    for (int y = movingQueen.y(); y < boardSize; y++) {
+        possibleMoves.push_back({movingQueen.x(), y});
+    }
+    // Left-Up
+    for (int x = movingQueen.x(), y = movingQueen.y(); x >= 0 && y >= 0; x--, y--) {
+        possibleMoves.push_back({x, y});
+    }
+    // Left-Down
+    for (int x = movingQueen.x(), y = movingQueen.y(); x >= 0 && y < boardSize; x--, y++) {
+        possibleMoves.push_back({x, y});
+    }
+    // Right-Up
+    for (int x = movingQueen.x(), y = movingQueen.y(); x < boardSize && y >= 0; x++, y--) {
+        possibleMoves.push_back({x, y});
+    }
+    // Right-Down
+    for (int x = movingQueen.x(), y = movingQueen.y(); x < boardSize && y < boardSize; x++, y++) {
+        possibleMoves.push_back({x, y});
+    }
+
+    // Filter by already contained
     for (auto &move : possibleMoves) {
-        if (onBoard(boardSize, move) && !queens.contains(move)) {
+        if (!queens.contains(move)) {
             newQueensStates.push_back(queens);
             newQueensStates.last().push_back(move);
         }
     }
 
     return newQueensStates;
-}
-
-bool LocalSearch::onBoard(int boardSize, QPoint queen) {
-    return queen.x() >= 0 && queen.x() < boardSize // Column
-        && queen.y() >= 0 && queen.y() < boardSize; // Row
 }
 
 LocalSearch::State LocalSearch::hillClimb(int boardSize, QList<QPoint> &queens, int equivalentMoves) {
@@ -85,7 +106,7 @@ LocalSearch::State LocalSearch::hillClimb(int boardSize, QList<QPoint> &queens, 
         }
     }
 
-    qDebug() << "steps:" << steps; // TODO Status bar
+    state.steps = steps;
     return state;
 }
 
@@ -110,9 +131,8 @@ LocalSearch::State LocalSearch::hillClimbStep(int boardSize, QList<QPoint> &quee
 
     // Select random minimal heuristics state
     QList<State> states;
-    std::sample(minStates.begin(), minStates.end(), std::back_inserter(states), 1, randGen); // TODO Insert into variable directly
+    std::sample(minStates.begin(), minStates.end(), std::back_inserter(states), 1, randGen);
 
-    qDebug() << "min:" << states[0].heuristics;
     return states[0];
 }
 
@@ -126,7 +146,7 @@ LocalSearch::State LocalSearch::simulatedAnnealing(int boardSize, QList<QPoint> 
         state = simulatedAnnealingStep(boardSize, state.queens, tempStart, tempChange);
     }
 
-    qDebug() << "steps:" << steps; // TODO Status bar
+    state.steps = steps;
     return state;
 }
 
@@ -146,7 +166,7 @@ LocalSearch::State LocalSearch::simulatedAnnealingStep(int boardSize, QList<QPoi
 
     // Select a random move
     QList<QList<QPoint>> randStates;
-    std::sample(moveStates.begin(), moveStates.end(), std::back_inserter(randStates), 1, randGen); // TODO Insert into variable directly
+    std::sample(moveStates.begin(), moveStates.end(), std::back_inserter(randStates), 1, randGen);
     QList<QPoint> randState = randStates[0];
 
     // Select random state if lower heuristics or by probability
@@ -177,7 +197,7 @@ LocalSearch::State LocalSearch::localBeam(int boardSize, QList<QPoint> &queens, 
         states = localBeamStep(boardSize, states, nStates);
     }
 
-    qDebug() << "steps:" << steps; // TODO Status bar
+    states[0].steps = steps;
     return states[0];
 }
 
@@ -222,6 +242,6 @@ QList<LocalSearch::State> LocalSearch::localBeamStep(int boardSize, QList<State>
     return newStates;
 }
 
-/*LocalSearch::State LocalSearch::genetic(int boardSize, QList<QPoint> &queens, int populationSize, int elitePerc, int crossProb, int mutationProb, int generations) {
+LocalSearch::State LocalSearch::genetic(int boardSize, QList<QPoint> &queens, int populationSize, int elitePerc, int crossProb, int mutationProb, int generations) {
 
-}*/
+}

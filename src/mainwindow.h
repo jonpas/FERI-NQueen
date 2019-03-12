@@ -26,6 +26,7 @@ private:
 
     static const QPair<uint8_t, uint8_t> SIZE_RANGE;
 
+    bool eventFilter(QObject* o, QEvent* e);
     void populateUi();
     void setupBoard();
     void generateQueens();
@@ -34,9 +35,10 @@ private:
     int getBoardSize();
     Placement getPlacementType();
     Algorithm getAlgorithm();
+    QString getAlgorithmName();
     bool isStepsChecked();
 
-    QString prettifyCamelCase(const QString &s);
+    QString spaceCamelCase(const QString &s);
 
 private slots:
     void on_comboBoxSize_currentIndexChanged(const QString &arg1);
