@@ -4,7 +4,6 @@
 
 #include <QRandomGenerator>
 #include <QMetaEnum>
-#include <QDebug>
 
 const QPair<uint8_t, uint8_t> MainWindow::SIZE_RANGE = {4, 12};
 
@@ -29,6 +28,13 @@ MainWindow::~MainWindow() {
     delete ui;
 }
 
+bool MainWindow::eventFilter(QObject */*object*/, QEvent *event) {
+    if (event->type() == QEvent::Resize) {
+        resizeQueensUi();
+    }
+    return false;
+}
+
 void MainWindow::populateUi() {
     // Size
     ui->comboBoxSize->blockSignals(true);
@@ -45,7 +51,7 @@ void MainWindow::populateUi() {
     for (int i = 0; i < metaPlacement.keyCount(); i++) {
         ui->comboBoxPlacement->addItem(spaceCamelCase(metaPlacement.key(i)));
     }
-    ui->comboBoxPlacement->setCurrentIndex(Placement::TopRow);
+    ui->comboBoxPlacement->setCurrentIndex(Placement::Random);
     ui->comboBoxPlacement->blockSignals(false);
 
     // Algorithm
@@ -55,7 +61,7 @@ void MainWindow::populateUi() {
     for (int i = 0; i < metaAlgorithm.keyCount(); i++) {
         ui->comboBoxAlgorithm->addItem(spaceCamelCase(metaAlgorithm.key(i)));
     }
-    ui->comboBoxAlgorithm->setCurrentIndex(Algorithm::GeneticAlgorithm);
+    ui->comboBoxAlgorithm->setCurrentIndex(Algorithm::HillClimbing);
     ui->comboBoxAlgorithm->blockSignals(false);
 }
 
@@ -95,13 +101,6 @@ void MainWindow::setupBoard() {
     }
 }
 
-bool MainWindow::eventFilter(QObject* object, QEvent* event) {
-    if (event->type() == QEvent::Resize) {
-        board->setIconSize(board->size() / getBoardSize());
-    }
-    return false;
-}
-
 void MainWindow::generateQueens() {
     int size = getBoardSize();
     Placement type = getPlacementType();
@@ -121,6 +120,10 @@ void MainWindow::generateQueens() {
             }
         }
     }
+
+    ui->statusBar->showMessage(
+        QString("Generated! Heuristics = %1")
+                .arg(QString::number(LocalSearch::calcHeuristics(queens))), 10000);
 }
 
 void MainWindow::toggleAlgorithmOptions() {
@@ -134,6 +137,10 @@ void MainWindow::toggleAlgorithmOptions() {
 
     // Enable Step mode only for supported algorithms
     ui->checkBoxRunStep->setEnabled(algorithm == Algorithm::HillClimbing || algorithm == Algorithm::SimulatedAnnealing);
+}
+
+void MainWindow::resizeQueensUi() {
+    board->setIconSize(board->size() / getBoardSize());
 }
 
 int MainWindow::getBoardSize() {
@@ -157,6 +164,7 @@ bool MainWindow::isStepsChecked() {
 }
 
 void MainWindow::on_comboBoxSize_currentIndexChanged(const QString &/*arg1*/) {
+    resizeQueensUi();
     generateQueens();
     setupBoard();
 }
@@ -222,8 +230,8 @@ void MainWindow::on_pushButtonRun_clicked() {
         case Algorithm::GeneticAlgorithm: {
             int populationSize = ui->lineEditPopulationSize->text().toInt();
             int elitePerc = ui->lineEditElitePerc->text().toInt();
-            int crossProb = ui->lineEditCrossProb->text().toInt();
-            int mutationProb = ui->lineEditMutationProb->text().toInt();
+            double crossProb = ui->lineEditCrossProb->text().toDouble();
+            double mutationProb = ui->lineEditMutationProb->text().toDouble();
             int generations = ui->lineEditGenerations->text().toInt();
 
             state = LocalSearch::genetic(getBoardSize(), queens, populationSize, elitePerc, crossProb, mutationProb, generations);
@@ -237,7 +245,7 @@ void MainWindow::on_pushButtonRun_clicked() {
     ui->statusBar->showMessage(
         QString("Finished %1: %2! [%3 steps]")
                 .arg(algorithmName,
-                     state.heuristics == 0 ? "Success": "Failure",
+                     state.heuristics == 0 ? "Success": QString("Failure (h = %1)").arg(QString::number(state.heuristics)),
                      isStepsChecked() ? "1" : QString::number(state.steps)),
         10000);
 }

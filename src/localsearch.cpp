@@ -1,6 +1,6 @@
 #include "localsearch.h"
+
 #include <algorithm>
-#include <QDebug>
 
 int LocalSearch::calcHeuristics(QList<QPoint> queens) {
     int h = 0;
@@ -31,35 +31,35 @@ QList<QList<QPoint>> LocalSearch::getAllowedStates(int boardSize, QList<QPoint> 
     QList<QPoint> possibleMoves;
 
     // Left
-    for (int x = movingQueen.x(); x >= 0; x--) {
+    for (int x = movingQueen.x() - 1; x >= 0; x--) {
         possibleMoves.push_back({x, movingQueen.y()});
     }
     // Right
-    for (int x = movingQueen.x(); x < boardSize; x++) {
+    for (int x = movingQueen.x() + 1; x < boardSize; x++) {
         possibleMoves.push_back({x, movingQueen.y()});
     }
     // Up
-    for (int y = movingQueen.y(); y >= 0; y--) {
+    for (int y = movingQueen.y() - 1; y >= 0; y--) {
         possibleMoves.push_back({movingQueen.x(), y});
     }
     // Down
-    for (int y = movingQueen.y(); y < boardSize; y++) {
+    for (int y = movingQueen.y() + 1; y < boardSize; y++) {
         possibleMoves.push_back({movingQueen.x(), y});
     }
     // Left-Up
-    for (int x = movingQueen.x(), y = movingQueen.y(); x >= 0 && y >= 0; x--, y--) {
+    for (int x = movingQueen.x() - 1, y = movingQueen.y() - 1; x >= 0 && y >= 0; x--, y--) {
         possibleMoves.push_back({x, y});
     }
     // Left-Down
-    for (int x = movingQueen.x(), y = movingQueen.y(); x >= 0 && y < boardSize; x--, y++) {
+    for (int x = movingQueen.x() - 1, y = movingQueen.y() + 1; x >= 0 && y < boardSize; x--, y++) {
         possibleMoves.push_back({x, y});
     }
     // Right-Up
-    for (int x = movingQueen.x(), y = movingQueen.y(); x < boardSize && y >= 0; x++, y--) {
+    for (int x = movingQueen.x() + 1, y = movingQueen.y() - 1; x < boardSize && y >= 0; x++, y--) {
         possibleMoves.push_back({x, y});
     }
     // Right-Down
-    for (int x = movingQueen.x(), y = movingQueen.y(); x < boardSize && y < boardSize; x++, y++) {
+    for (int x = movingQueen.x() + 1, y = movingQueen.y() + 1; x < boardSize && y < boardSize; x++, y++) {
         possibleMoves.push_back({x, y});
     }
 
@@ -167,7 +167,7 @@ LocalSearch::State LocalSearch::simulatedAnnealingStep(int boardSize, QList<QPoi
     // Select a random move
     QList<QList<QPoint>> randStates;
     std::sample(moveStates.begin(), moveStates.end(), std::back_inserter(randStates), 1, randGen);
-    QList<QPoint> randState = randStates[0];
+    QList<QPoint> randState = randStates.first();
 
     // Select random state if lower heuristics or by probability
     int randStateHeuristics = calcHeuristics(randState);
@@ -176,8 +176,7 @@ LocalSearch::State LocalSearch::simulatedAnnealingStep(int boardSize, QList<QPoi
         state = {randState, randStateHeuristics};
     } else {
         double probability = exp(-deltaHeuristics / static_cast<double>(temp));
-        std::uniform_real_distribution<double> dist(0.0, 1.0);
-        if (probability > dist(randGen)) {
+        if (probability > distProbability(randGen)) {
             state = {randState, randStateHeuristics};
         }
     }
@@ -197,8 +196,8 @@ LocalSearch::State LocalSearch::localBeam(int boardSize, QList<QPoint> &queens, 
         states = localBeamStep(boardSize, states, nStates);
     }
 
-    states[0].steps = steps;
-    return states[0];
+    states.first().steps = steps;
+    return states.first();
 }
 
 QList<LocalSearch::State> LocalSearch::localBeamInit(int boardSize, QList<QPoint> &queens, int nStates) {
@@ -213,6 +212,7 @@ QList<LocalSearch::State> LocalSearch::localBeamInit(int boardSize, QList<QPoint
     // Select random states
     QList<State> states;
     std::sample(moveStates.begin(), moveStates.end(), std::back_inserter(states), nStates, randGen);
+    std::shuffle(states.begin(), states.end(), randGen); // Randomize (sample keeps relative order)
 
     return states;
 }
@@ -222,8 +222,8 @@ QList<LocalSearch::State> LocalSearch::localBeamStep(int boardSize, QList<State>
     std::sort(states.begin(), states.end());
 
     // Exit if found result
-    if (states[0].heuristics == 0) {
-        return {states[0]};
+    if (states.first().heuristics == 0) {
+        return {states.first()};
     }
 
     // Select nStates best states
@@ -242,6 +242,99 @@ QList<LocalSearch::State> LocalSearch::localBeamStep(int boardSize, QList<State>
     return newStates;
 }
 
-LocalSearch::State LocalSearch::genetic(int boardSize, QList<QPoint> &queens, int populationSize, int elitePerc, int crossProb, int mutationProb, int generations) {
+LocalSearch::State LocalSearch::genetic(int boardSize, QList<QPoint> &queens, int nStates, int elitePerc, double crossProb, double mutationProb, int generations) {
+    QList<State> states = geneticInit(boardSize, queens, nStates);
+    int steps = 0;
 
+    // Try to find global optimum (heuristics = 0)
+    while (states.size() > 1 && states.first().heuristics != 0 && generations > steps) {
+        steps++;
+        states = geneticStep(boardSize, states, nStates, elitePerc, crossProb, mutationProb);
+    }
+
+    states.first().steps = steps;
+    return states.first();
+}
+
+QList<LocalSearch::State> LocalSearch::geneticInit(int boardSize, QList<QPoint> &queens, int nStates) {
+    // Perform all possible moves on all queens and calculate their heuristics
+    QList<State> moveStates;
+    for (int i = 0; i < queens.size(); i++) {
+        for (auto &newQueens : getAllowedStates(boardSize, queens, i)) {
+            moveStates.push_back({newQueens, calcHeuristics(newQueens)});
+        }
+    }
+
+    // Select random states
+    QList<State> states;
+    std::sample(moveStates.begin(), moveStates.end(), std::back_inserter(states), nStates, randGen);
+    std::shuffle(states.begin(), states.end(), randGen); // Randomize (sample keeps relative order)
+
+    return states;
+}
+
+QList<LocalSearch::State> LocalSearch::geneticStep(int boardSize, QList<State> &states, int nStates, int elitePerc, double crossProb, double mutationProb) {
+    // Sort by heuristics
+    std::sort(states.begin(), states.end());
+
+    // Exit if found result
+    if (states.first().heuristics == 0) {
+        return {states.first()};
+    }
+
+    QList<State> newStates;
+
+    // Copy elites if population high enough to satisfy required elite percentage
+    int elites = states.size() / elitePerc;
+    for (int i = 0; i < elites; i++) {
+        newStates.push_back(states[i]);
+    }
+
+    for (int i = 0; i < nStates / 2 && i < states.size(); i++) {
+        QList<State> selected = {};
+
+        // Choose 2 parents with random selection
+        std::sample(states.begin(), states.end(), std::back_inserter(selected), 2, randGen);
+        std::shuffle(states.begin(), states.end(), randGen); // Randomize (sample keeps relative order)
+
+        // Uniform crossover by probablity
+        if (crossProb > distProbability(randGen)) {
+            // Exchange each queen couple by probability
+            State &state1 = selected[0];
+            State &state2 = selected[1];
+
+            for (int i = 0; i < state1.queens.size(); i++) {
+                for (int j = i + 1; j < state2.queens.size(); j++) {
+                    QPoint queen1 = state1.queens[i];
+                    QPoint queen2 = state2.queens[j];
+
+                    if (crossProb > distProbability(randGen)) {
+                        if (!state1.queens.contains(queen2) && !state2.queens.contains(queen1)) {
+                            state1.queens.replace(i, queen2);
+                            state2.queens.replace(j, queen1);
+                            state1.heuristics = calcHeuristics(state1.queens);
+                            state2.heuristics = calcHeuristics(state2.queens);
+                        }
+                    }
+                }
+            }
+        }
+
+        std::uniform_int_distribution<> distQueen(0, boardSize - 1);
+        for (auto &sel : selected) {
+            // Mutate by probability
+            if (mutationProb > distProbability(randGen)) {
+                QList<QList<QPoint>> allowedStates = getAllowedStates(boardSize, sel.queens, distQueen(randGen));
+                QList<QList<QPoint>> randStates;
+                std::sample(allowedStates.begin(), allowedStates.end(), std::back_inserter(randStates), 1, randGen);
+                QList<QPoint> randState = randStates.first();
+
+                sel = {randState, calcHeuristics(randState)};
+            }
+        }
+
+        newStates.append({selected[0], selected[1]});
+    }
+
+    return newStates;
 }

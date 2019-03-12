@@ -1,10 +1,11 @@
 #pragma once
 
-#include <QList>
 #include <random>
+#include <QList>
 
 namespace LocalSearch {
     static std::mt19937 randGen = std::mt19937{std::random_device{}()};
+    static std::uniform_real_distribution<> distProbability(0.0, 1.0);
 
     struct State {
         QList<QPoint> queens;
@@ -34,5 +35,8 @@ namespace LocalSearch {
     QList<State> localBeamInit(int boardSize, QList<QPoint> &queens, int nStates);
     QList<State> localBeamStep(int boardSize, QList<State> &states, int nStates);
 
-    State genetic(int boardSize, QList<QPoint> &queens, int populationSize, int elitePerc, int crossProb, int mutationProb, int generations);
+    // State = Chromosome, Queen = Gene, nState = Population
+    State genetic(int boardSize, QList<QPoint> &queens, int nStates, int elitePerc, double crossProb, double mutationProb, int generations);
+    QList<State> geneticInit(int boardSize, QList<QPoint> &queens, int nStates);
+    QList<State> geneticStep(int boardSize, QList<State> &states, int nStates, int elitePerc, double crossProb, double mutationProb);
 };

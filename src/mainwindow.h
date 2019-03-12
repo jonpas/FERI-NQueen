@@ -17,7 +17,7 @@ public:
     Q_ENUM(Algorithm)
 
     explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    ~MainWindow() override;
 
 private:
     Ui::MainWindow *ui;
@@ -26,11 +26,13 @@ private:
 
     static const QPair<uint8_t, uint8_t> SIZE_RANGE;
 
-    bool eventFilter(QObject* o, QEvent* e);
+    bool eventFilter(QObject */*object*/, QEvent */*event*/) override;
+
     void populateUi();
     void setupBoard();
     void generateQueens();
     void toggleAlgorithmOptions();
+    void resizeQueensUi();
 
     int getBoardSize();
     Placement getPlacementType();
